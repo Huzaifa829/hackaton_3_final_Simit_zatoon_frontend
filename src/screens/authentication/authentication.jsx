@@ -1,27 +1,17 @@
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
+import axios from "axios";
 import * as yup from "yup";
-import { firebaseLogin, firebaseSignUp } from "../../firebaseDB/firebaseFunction.js";
+import { firebaseLogin } from "../../firebaseDB/firebaseFunction.js";
 
-// Validation Schemas
+// Validation Schema for Login
 const loginSchema = yup.object({
   email: yup.string().email("Invalid email format").required("Email is required"),
   password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
 });
 
-const signUpSchema = yup.object({
-  name: yup.string().required("Name is required"),
-  email: yup.string().email("Invalid email format").required("Email is required"),
-  password: yup.string().min(6, "Password must be at least 6 characters").required("Password is required"),
-  confirmPassword: yup
-    .string()
-    .oneOf([yup.ref("password")], "Passwords must match")
-    .required("Confirm Password is required"),
-});
-
 const Authentication = () => {
-  const [isLogin, setIsLogin] = useState(true);
   const [loading, setLoading] = useState(false); // Loader state
   const [error, setError] = useState("");
 
@@ -30,50 +20,42 @@ const Authentication = () => {
     handleSubmit,
     formState: { errors },
   } = useForm({
-    resolver: yupResolver(isLogin ? loginSchema : signUpSchema),
+    resolver: yupResolver(loginSchema),
   });
+
+ 
 
   const onSubmit = async (data) => {
     setLoading(true);
+    console.log('====================================');
+    console.log(data);
+    console.log('====================================');
     setError(""); // Reset error
     try {
-      if (isLogin) {
-        const { email, password } = data;
-        await firebaseLogin(email, password);
-        alert("Login Successful!");
-      } else {
-        const { email, password, name } = data;
-        await firebaseSignUp(email, password, name);
-        alert("Sign-Up Successful!");
-      }
+      const { email, password } = data;
+  
+      // Make a POST request to your login API using axios
+      const response = await axios.post("http://localhost:3000/api/users/login/", {
+        email: email,
+        password: password,
+      });
+  
+      // If login is successful, handle the response
+      console.log(response.data); // Handle the response data as needed
+      alert("Login Successful!");
     } catch (err) {
-      setError(err.message || "An error occurred");
+      // Handle errors
+      setError(err.response?.data?.message || "An error occurred");
     } finally {
       setLoading(false);
     }
   };
-
+  
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100">
       <div className="bg-white p-8 shadow-md rounded-md w-full max-w-md">
-        <h2 className="text-2xl font-bold text-center mb-4">
-          {isLogin ? "Login" : "Sign Up"}
-        </h2>
+        <h2 className="text-2xl font-bold text-center mb-4">Login</h2>
         <form onSubmit={handleSubmit(onSubmit)}>
-          {!isLogin && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">Name</label>
-              <input
-                type="text"
-                {...register("name")}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Enter your name"
-              />
-              {errors.name && (
-                <p className="text-red-500 text-sm mt-1">{errors.name.message}</p>
-              )}
-            </div>
-          )}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Email</label>
             <input
@@ -98,24 +80,6 @@ const Authentication = () => {
               <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>
             )}
           </div>
-          {!isLogin && (
-            <div className="mb-4">
-              <label className="block text-sm font-medium mb-1">
-                Confirm Password
-              </label>
-              <input
-                type="password"
-                {...register("confirmPassword")}
-                className="w-full px-4 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Confirm your password"
-              />
-              {errors.confirmPassword && (
-                <p className="text-red-500 text-sm mt-1">
-                  {errors.confirmPassword.message}
-                </p>
-              )}
-            </div>
-          )}
           <button
             type="submit"
             className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition flex items-center justify-center"
@@ -123,24 +87,11 @@ const Authentication = () => {
             {loading ? (
               <div className="loader border-t-transparent border-4 border-white rounded-full w-5 h-5 animate-spin"></div>
             ) : (
-              isLogin ? "Login" : "Sign Up"
+              "Login"
             )}
           </button>
         </form>
         {error && <p className="text-red-500 text-center mt-4">{error}</p>}
-        <div className="mt-4 text-center">
-          <p className="text-sm">
-            {isLogin
-              ? "Don't have an account? "
-              : "Already have an account? "}
-            <button
-              onClick={() => setIsLogin(!isLogin)}
-              className="text-blue-500 font-bold hover:underline"
-            >
-              {isLogin ? "Sign Up" : "Login"}
-            </button>
-          </p>
-        </div>
       </div>
     </div>
   );

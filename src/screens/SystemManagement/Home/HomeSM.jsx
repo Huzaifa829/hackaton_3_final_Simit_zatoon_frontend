@@ -5,7 +5,7 @@ import { LayoutDashboard, Menu } from "lucide-react";
 const HomeSM = () => {
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-4">System Management</h1>
+      <h1 className="text-3xl font-bold mb-4">SAYLANI BENIFICIARY MANAGEMENT SYSTEM </h1>
       <nav className="flex gap-4 mb-6">
         <Link
           to="dashboard"

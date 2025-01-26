@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Table, TableBody, TableCell, TableHead, TableRow } from "@/components/ui/table";
 
-const ItemTable = ({ items, onEdit, onDelete, onView }) => {
+const UserTable = ({ users, onEdit, onDelete }) => {
   return (
     <div className="overflow-x-auto w-full p-4">
       <Table className="min-w-full table-auto bg-white border border-gray-200 rounded-lg shadow-md">
@@ -16,22 +16,13 @@ const ItemTable = ({ items, onEdit, onDelete, onView }) => {
         <thead>
           <TableRow className="bg-gray-100">
             <TableCell as="th" className="font-bold text-sm text-gray-700 px-4 py-2">
-              ID
+              Name
             </TableCell>
             <TableCell as="th" className="font-bold text-sm text-gray-700 px-4 py-2">
-              Item Name
+              Email
             </TableCell>
             <TableCell as="th" className="font-bold text-sm text-gray-700 px-4 py-2">
-              Category
-            </TableCell>
-            <TableCell as="th" className="font-bold text-sm text-gray-700 px-4 py-2">
-              Price
-            </TableCell>
-            <TableCell as="th" className="font-bold text-sm text-gray-700 px-4 py-2">
-              Description
-            </TableCell>
-            <TableCell as="th" className="font-bold text-sm text-gray-700 px-4 py-2">
-              Image
+              Role
             </TableCell>
             <TableCell as="th" className="font-bold text-sm text-gray-700 px-4 py-2 text-center">
               Actions
@@ -41,21 +32,14 @@ const ItemTable = ({ items, onEdit, onDelete, onView }) => {
 
         {/* Table Body */}
         <tbody>
-          {items.map((item, index) => (
+          {users.map((user, index) => (
             <TableRow key={index} className="hover:bg-gray-50">
-              <TableCell className="text-sm text-gray-600 px-4 py-2">{item.id}</TableCell>
-              <TableCell className="text-sm text-gray-600 px-4 py-2">{item.item_name}</TableCell>
-              <TableCell className="text-sm text-gray-600 px-4 py-2">{item.category}</TableCell>
-              <TableCell className="text-sm text-gray-600 px-4 py-2">{item.price}</TableCell>
-              <TableCell className="text-sm text-gray-600 px-4 py-2 truncate max-w-xs">
-                {item.description}
-              </TableCell>
-              <TableCell className="px-4 py-2">
-                <img
-                  src={item.image_url}
-                  alt={item.item_name}
-                  className="w-16 h-16 rounded-md object-cover"
-                />
+              <TableCell className="text-sm text-gray-600 px-4 py-2">{user.name}</TableCell>
+              <TableCell className="text-sm text-gray-600 px-4 py-2">{user.email}</TableCell>
+              <TableCell className="text-sm text-gray-600 px-4 py-2">
+                {user.roles && user.roles.length > 0
+                  ? user.roles.join(', ') // Display roles as a comma-separated list
+                  : 'No Role Assigned'}
               </TableCell>
               <TableCell className="px-4 py-2 text-center">
                 <DropdownMenu>
@@ -66,21 +50,14 @@ const ItemTable = ({ items, onEdit, onDelete, onView }) => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent className="bg-white shadow-md border rounded-md">
                     <DropdownMenuItem
-                      onClick={() => onView(item)}
-                      className="flex items-center gap-2 text-sm text-gray-700 hover:bg-gray-100 px-4 py-2"
-                    >
-                      <Eye size={16} />
-                      View
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onEdit(item)}
+                      onClick={() => onEdit(user)}
                       className="flex items-center gap-2 text-sm text-gray-700 hover:bg-gray-100 px-4 py-2"
                     >
                       <Pencil size={16} />
                       Edit
                     </DropdownMenuItem>
                     <DropdownMenuItem
-                      onClick={() => onDelete(item.id)}
+                      onClick={() => onDelete(user._id)} // Use user._id for deletion
                       className="flex items-center gap-2 text-sm text-red-600 hover:bg-red-100 px-4 py-2"
                     >
                       <Trash size={16} />
@@ -93,12 +70,12 @@ const ItemTable = ({ items, onEdit, onDelete, onView }) => {
           ))}
         </tbody>
       </Table>
-      {/* Show message if there are no items */}
-      {items.length === 0 && (
-        <p className="text-center text-gray-500 mt-4">No items available.</p>
+      {/* Show message if there are no users */}
+      {users.length === 0 && (
+        <p className="text-center text-gray-500 mt-4">No users available.</p>
       )}
     </div>
   );
 };
 
-export default ItemTable;
+export default UserTable;

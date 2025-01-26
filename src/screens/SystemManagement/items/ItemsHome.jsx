@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Plus } from "lucide-react";
 import ModalAddItem from "./Modal/ModAl_AddItem";
 import EditModal from "./Modal/EditedModal"; // Import EditModal
@@ -6,6 +6,8 @@ import { getAllItemFromTable } from "../../../supabase DB/supabaseFunctions";
 import ItemTable from "./ItemTable/ItemTable";
 import { useDispatch, useSelector } from "react-redux";
 import { addItems } from "../../../config/redux/reducers/itemsSlice";
+import axios from "axios";
+import { addUser } from "../../../config/redux/reducers/userSlice";
 
 const ItemsHome = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,7 +15,20 @@ const ItemsHome = () => {
   const [itemToEdit, setItemToEdit] = useState(null);
   const dispatch = useDispatch();
   const selector = useSelector((state) => state.items.itemsProduct);
+  const UserSelector = useSelector((state) => state.users.users);
 
+  if (UserSelector.length == 0) {
+    axios
+    .get("http://localhost:3000/api/users")
+    .then((response) => {
+      const getalldata = response.data;
+      getalldata.map((item) => dispatch(addUser(item)));
+    })
+    .catch((error) => {
+      console.error("There was an error fetching the users:", error);
+    });
+  }
+  
   const getalldata = async () => {
     const getalldata = await getAllItemFromTable("items");
     getalldata.map((item) => dispatch(addItems(item)));
@@ -27,7 +42,6 @@ const ItemsHome = () => {
   const toggleModal = () => setIsModalOpen(!isModalOpen);
   const toggleEditModal = () => setIsEditModalOpen(!isEditModalOpen);
 
-  const handleView = (item) => alert(`Viewing item: ${item.item_name}`);
 
   const handleEdit = (item) => {
     console.log('====================================');
@@ -66,7 +80,7 @@ const ItemsHome = () => {
         </button>
       </div>
 
-      <ItemTable items={selector} onEdit={handleEdit} onDelete={handleDelete} onView={handleView} />
+      <ItemTable users={UserSelector} onEdit={handleEdit} onDelete={handleDelete} />
 
       {/* Add Item Modal */}
       <ModalAddItem isOpen={isModalOpen} toggleModal={toggleModal} categories={categories} />

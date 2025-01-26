@@ -23,10 +23,6 @@ const route = createBrowserRouter([
     children: [
       {
         path: "", // Default route (HomePage)
-        element: <HomePage />,
-      },
-      {
-        path: "/auth", // Authentication Page
         element: <Authentication />,
       },
       {

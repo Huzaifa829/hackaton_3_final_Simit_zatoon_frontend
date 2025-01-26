@@ -1,37 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
+import axios from 'axios';
 
-const EditModal = ({ isOpen, toggleModal, categories, item, onSave }) => {
+const EditModal = ({ isOpen, toggleModal, item, onSave }) => {
   const [formData, setFormData] = useState({
-    item_name: '',
-    category: '',
-    price: '',
-    description: '',
-    image_url: '',
+    name: '',
+    email: '',
+    roles: [],  // Changed to an array to handle multiple roles
   });
 
   const [initialData, setInitialData] = useState(null); // Store the original item data
-  const [newImage, setNewImage] = useState(null); // Handle new image upload
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (item) {
       const initialForm = {
-        item_name: item.item_name || '',
-        category: item.category || '',
-        price: item.price || '',
-        description: item.description || '',
-        image_url: item.image_url || '',
+        name: item.name || '',
+        email: item.email || '',
+        roles: item.roles || [], // Handle roles as an array
       };
       setFormData(initialForm);
       setInitialData(initialForm); // Set initial data for comparison
     } else {
       // Reset form if no item is provided
       setFormData({
-        item_name: '',
-        category: '',
-        price: '',
-        description: '',
-        image_url: '',
+        name: '',
+        email: '',
+        roles: [],
       });
       setInitialData(null);
     }
@@ -42,41 +37,67 @@ const EditModal = ({ isOpen, toggleModal, categories, item, onSave }) => {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const imageURL = URL.createObjectURL(file);
-      setNewImage(imageURL);
-    }
+  const handleRoleChange = (e) => {
+    const { value } = e.target;
+    setFormData((prev) => {
+      const roles = prev.roles.includes(value)
+        ? prev.roles.filter((role) => role !== value) // Remove role if already selected
+        : [...prev.roles, value]; // Add role if not selected
+      return { ...prev, roles: roles };
+    });
   };
 
   const resetForm = () => {
     setFormData(initialData); // Reset formData to initial values
-    setNewImage(null); // Clear the new image
   };
 
   const isFormChanged = () => {
     if (!initialData) return false; // No changes if initial data is null
-    const hasTextChanges = Object.keys(formData).some(
-      (key) => formData[key] !== initialData[key],
+    return (
+      formData.name !== initialData.name ||
+      formData.email !== initialData.email ||
+      !arraysEqual(formData.roles, initialData.roles)
     );
-    return hasTextChanges || newImage !== null;
   };
 
-  const handleSave = () => {
-    const updatedData = {
-      ...formData,
-      image_url: newImage,
-      id: item.id || formData.image_url,
-    };
-    onSave(updatedData); // Pass updated data back to the parent
-    resetForm(); // Reset the form after saving
-    toggleModal(); // Close the modal
+  const handleSave = async () => {
+    try {
+      setIsLoading(true);
+      // Prepare the updated data
+      const updatedData = {
+        name: formData.name,
+        email: formData.email,
+        roles: formData.roles, // Send roles as an array
+      };
+
+      console.log('Updated data:', updatedData);
+      console.log('Updated data:', item._id);
+      
+      // Call the API to update the user data
+      const response = await axios.put(
+        `https://hackaton-3-final-simit-zatoon-backend.vercel.app/${item._id}`,
+        updatedData
+      );
+
+      // Call onSave callback after successful update
+      onSave(response.data.user);
+      resetForm(); // Reset the form after saving
+      toggleModal(); // Close the modal
+      setIsLoading(false);
+    } catch (error) {
+      console.error('Error updating user:', error);
+      setIsLoading(false);
+    }
   };
 
   const handleCancel = () => {
     resetForm(); // Reset the form when cancel is clicked
     toggleModal(); // Close the modal
+  };
+
+  const arraysEqual = (a, b) => {
+    if (a.length !== b.length) return false;
+    return a.every((val, index) => val === b[index]);
   };
 
   if (!isOpen) return null;
@@ -87,14 +108,11 @@ const EditModal = ({ isOpen, toggleModal, categories, item, onSave }) => {
         {/* Modal Header */}
         <div className="flex justify-between items-center mb-4">
           <div>
-            <h3 className="text-lg font-bold">
-              Edit Item - ID: {item?.id || 'N/A'}
-            </h3>
-            {/* Display item ID dynamically */}
+            <h3 className="text-lg font-bold">Edit User - ID: {item?._id || 'N/A'}</h3>
           </div>
           <button
             className="text-gray-500 hover:text-red-500"
-            onClick={handleCancel} // Ensure cancel action resets data
+            onClick={handleCancel}
           >
             <X size={20} />
           </button>
@@ -102,86 +120,75 @@ const EditModal = ({ isOpen, toggleModal, categories, item, onSave }) => {
 
         {/* Modal Body */}
         <div className="space-y-4">
-          {/* Image Display and Upload */}
+          {/* Name */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Item Image
-            </label>
-            <div className="flex items-center gap-4">
-              <img
-                src={newImage || formData.image_url || '/placeholder-image.png'}
-                alt="Item"
-                className="w-24 h-24 object-cover rounded border border-gray-300"
-              />
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleImageChange}
-                className="border border-gray-300 rounded-lg px-2 py-1"
-              />
-            </div>
-          </div>
-
-          {/* Item Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Item Name
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
             <input
               type="text"
-              name="item_name"
-              value={formData.item_name}
+              name="name"
+              value={formData.name}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Category */}
+          {/* Email */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Category
-            </label>
-            <select
-              name="category"
-              value={formData.category}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="">Select Category</option>
-              {categories.map((category, index) => (
-                <option key={index} value={category}>
-                  {category}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Price */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Price
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
             <input
-              type="number"
-              name="price"
-              value={formData.price}
+              type="email"
+              name="email"
+              value={formData.email}
               onChange={handleChange}
               className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          {/* Description */}
+          {/* Roles */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Description
-            </label>
-            <textarea
-              name="description"
-              value={formData.description}
-              onChange={handleChange}
-              className="w-full border border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-              rows="4"
-            ></textarea>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Roles</label>
+            <div className="space-y-2">
+              <label>
+                <input
+                  type="checkbox"
+                  value="Admin"
+                  checked={formData.roles.includes('Admin')}
+                  onChange={handleRoleChange}
+                  className="mr-2"
+                />
+                Admin
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  value="Receptionist"
+                  checked={formData.roles.includes('Receptionist')}
+                  onChange={handleRoleChange}
+                  className="mr-2"
+                />
+                Receptionist
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  value="Department Staff"
+                  checked={formData.roles.includes('Department Staff')}
+                  onChange={handleRoleChange}
+                  className="mr-2"
+                />
+                Department Staff
+              </label>
+              <label>
+                <input
+                  type="checkbox"
+                  value="Beneficiary"
+                  checked={formData.roles.includes('Beneficiary')}
+                  onChange={handleRoleChange}
+                  className="mr-2"
+                />
+                Beneficiary
+              </label>
+            </div>
           </div>
         </div>
 
@@ -200,9 +207,9 @@ const EditModal = ({ isOpen, toggleModal, categories, item, onSave }) => {
                 : 'bg-gray-300 cursor-not-allowed'
             } text-white px-4 py-2 rounded-lg`}
             onClick={handleSave}
-            disabled={!isFormChanged()}
+            disabled={!isFormChanged() || isLoading}
           >
-            Save Changes
+            {isLoading ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </div>
